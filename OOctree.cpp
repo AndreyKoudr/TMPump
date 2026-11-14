@@ -134,6 +134,40 @@ OVECTOR OOctree::realCellSizes(const int level)
   return res;
 }
 
+OREAL OOctree::cellVolume(const int level)
+{
+  OVECTOR sizes = realCellSizes(level);
+  OREAL v = sizes.X * sizes.Y * sizes.Z;
+  return v;
+}
+
+OREAL OOctree::cellVolume(const IPosition pos)
+{
+  int l = level(pos);
+  return cellVolume(l);
+}
+
+OREAL OOctree::minRealCellSize(const int level)
+{
+  OVECTOR sizes = realCellSizes(level);
+  OREAL v = std::min<OREAL>(std::min<OREAL>(sizes.X,sizes.Y),sizes.Z);
+  return v;
+}
+
+OREAL OOctree::maxRealCellSize(const int level)
+{
+  OVECTOR sizes = realCellSizes(level);
+  OREAL v = std::max<OREAL>(std::max<OREAL>(sizes.X,sizes.Y),sizes.Z);
+  return v;
+}
+
+OREAL OOctree::meanRealCellSize(const int level)
+{
+  OVECTOR sizes = realCellSizes(level);
+  OREAL v = (sizes.X + sizes.Y + sizes.Z) / 3.0;
+  return v;
+}
+
 bool OOctree::createBackground()
 {
   // clear lists
@@ -1081,6 +1115,21 @@ size_t OOctree::findBackCell(const IPosition& ocentre)
   return cellNo;
 }
 
+bool OOctree::insideBox(const OVECTOR &position)
+{
+  OREAL tolerance = std::numeric_limits<OREAL>::epsilon() * static_cast<OREAL>(10.0);
+
+  // outside box
+  for (size_t j = 0; j < 3; j++)
+  {
+    if (position.XYZ[j] < boxMin[j] + tolerance || position.XYZ[j] > boxMax[j] - tolerance)
+//!!!    if (position.XYZ[j] < boxMin[j] - tolerance || position.XYZ[j] > boxMax[j] + tolerance)
+      return false;
+  }
+
+  return true;
+}
+
 bool OOctree::findCellCentre(const OVECTOR &position, const int plevel, IPosition &centre)
 {
 
@@ -1089,14 +1138,8 @@ bool OOctree::findCellCentre(const OVECTOR &position, const int plevel, IPositio
     position.XYZ[2] << ", level " << plevel << endl;
 #endif
 
-  OREAL tolerance = std::numeric_limits<OREAL>::epsilon() * static_cast<OREAL>(10.0);
-
-  // outside box
-  for (size_t j = 0; j < 3; j++)
-  {
-    if (position.XYZ[j] < boxMin[j] - tolerance || position.XYZ[j] > boxMax[j] + tolerance)
-      return false;
-  }
+  if (!insideBox(position))
+    return false;
 
   // get background cell number
   IPosition backCell;
@@ -2805,6 +2848,24 @@ OREAL OOctree::getVolume(const OCELLS &cells, const char value)
   }
 
   return volume;
+}
+
+LINT OOctree::countCells(const OCELLS &cells, const char value)
+{
+  LINT count = 0;
+
+  for (auto c : cells)
+  {
+    if (isLeaf(c.first))
+    {
+      if (c.second.data.first == value)
+      {
+        count++;
+      }
+    }
+  }
+
+  return count;
 }
 
 void OOctree::getConformingCoordinates(const IPosition& ocentre, IPosition coord[27])

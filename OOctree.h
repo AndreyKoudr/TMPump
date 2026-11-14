@@ -94,7 +94,6 @@ a cell has children or not (is a leaf). DE-refinement may not be successful as w
 balanced condition.
 */
 
-
 /** Comparison function to compare two integer positions */
 class IPosCompare {
 public:
@@ -120,6 +119,43 @@ public:
         {
           return true;
         } else if (lhs.Z > rhs.Z)
+        {
+          return false;
+        } else
+        {
+          return false;
+        }
+      }
+    }
+  }
+};
+
+/** Comparison function to compare two integer positions, this is more correct
+  than the previous. */
+class IPosCompareZ {
+public:
+  bool operator()(const IPosition& lhs, const IPosition& rhs) const
+  {
+    if (lhs.Z < rhs.Z)
+    {
+      return true;
+    } else if (lhs.Z > rhs.Z)
+    {
+      return false;
+    } else
+    {
+      if (lhs.Y < rhs.Y)
+      {
+        return true;
+      } else if (lhs.Y > rhs.Y)
+      {
+        return false;
+      } else
+      {
+        if (lhs.X < rhs.X)
+        {
+          return true;
+        } else if (lhs.X > rhs.X)
         {
           return false;
         } else
@@ -203,6 +239,22 @@ public:
 
   /** Get real sizes for cell of /p level. */
   inline OVECTOR realCellSizes(const int level);
+
+  /** Get min real size among X,Y,Z for cell of /p level. */
+  OREAL minRealCellSize(const int level);
+
+  /** Get max real size among X,Y,Z for cell of /p level. */
+  OREAL maxRealCellSize(const int level);
+
+  /** Get mean real size among X,Y,Z for cell of /p level. */
+  OREAL meanRealCellSize(const int level);
+
+  /** Cell volume on level. */
+  OREAL cellVolume(const int level);
+
+  /** Cell volume on position. */
+  OREAL cellVolume(const IPosition pos);
+
 
   //===== Coordinates ==========================================================
 
@@ -334,6 +386,9 @@ public:
 
   //===== Find... ==============================================================
 
+  /** true if inside octree min/max. */
+  bool insideBox(const OVECTOR &position);
+
   /** Find a cell centre for a position of real coordinates. level must be from 0 
     (background) to maxLevel - 1 or greater (max level found). This cell may not exist at all -
     check by cells_.find(). */
@@ -433,6 +488,9 @@ public:
 
   /** Get volume for this type of cells (inindex, outindex, 3(raster)). */
   OREAL getVolume(const OCELLS &cells, const char value);
+
+  /** Count cells for this type of cells (inindex, outindex, 3(raster)). */
+  LINT countCells(const OCELLS &cells, const char value);
 
   /** Local node numbers to make triangles from faces */
   static const std::array<std::array<int,3>,12> faceTris;

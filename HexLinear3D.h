@@ -8,9 +8,9 @@
 #include <string>
 #include <vector>
 #include <assert.h>
-#include "Types.h"
-#include "Matrix.h"
-#include "GaussInt.h"
+#include "tbasics.h"
+#include "tmatrix.h"
+#include "tgaussint.h"
 
 /**
   Linear finite element
@@ -105,9 +105,9 @@ public:
   // Finite element matrices
 
   /** Get 8 x 3 node coordinate matrix. */
-  TMatrix<T,NUM_NODES,3> coordMatrix(const std::vector<Tvector> &totalCoordinates)
+  Matrix<T,NUM_NODES,3> coordMatrix(const std::vector<Tvector> &totalCoordinates)
   {
-    TMatrix<T,NUM_NODES,3> coords;
+    Matrix<T,NUM_NODES,3> coords;
 
     for (int i = 0; i < NUM_NODES; i++)
     {
@@ -126,10 +126,10 @@ public:
   }
 
   /** Get 8 x 1 shape function matrix, zeroes for non-existing nodes. */
-  static TMatrix<T,NUM_NODES,1> shapeFunctionMatrix(const std::array<T,NUM_NODES> &func)
+  static Matrix<T,NUM_NODES,1> shapeFunctionMatrix(const std::array<T,NUM_NODES> &func)
   {
-    TMatrix<T,NUM_NODES,1> funcmatrix;
-    funcmatrix.fill(T0);
+    Matrix<T,NUM_NODES,1> funcmatrix;
+    funcmatrix.fill(0.0);
 
     for (int i = 0; i < NUM_NODES; i++)
     {
@@ -140,10 +140,10 @@ public:
   }
 
   /** Get 8 x 3 shape function derivative matrix. */
-  static TMatrix<T,NUM_NODES,3> shapeFunctionDerivativesMatrix(const std::array<Tvector,NUM_NODES> &func)
+  static Matrix<T,NUM_NODES,3> shapeFunctionDerivativesMatrix(const std::array<Tvector,NUM_NODES> &func)
   {
-    TMatrix<T,NUM_NODES,3> dermatrix;
-    dermatrix.fill(T0);
+    Matrix<T,NUM_NODES,3> dermatrix;
+    dermatrix.fill(0.0);
 
     for (int i = 0; i < NUM_NODES; i++)
     {
@@ -162,15 +162,15 @@ public:
     See J.J.Connor, C.A.Brebbia Finite Element Techniques for Fluid Flow, page 125, equation (i).
   */
   bool Bmatrix(const std::vector<Tvector> &totalCoordinates, 
-    const std::array<Tvector,NUM_NODES> &derivatives, TMatrix<T,3,NUM_NODES> &B, T &jacobian);
+    const std::array<Tvector,NUM_NODES> &derivatives, Matrix<T,3,NUM_NODES> &B, T &jacobian);
 
   /** Calculate element stiffness matrix [K]. */
   bool  stiffnessMatrix(const std::vector<Tvector>& totalCoordinates,
-    TMatrix<T,HexLinear3D<T,Tvector>::NUM_NODES,HexLinear3D<T,Tvector>::NUM_NODES>& matrix, const int power);
+    Matrix<T,HexLinear3D<T,Tvector>::NUM_NODES,HexLinear3D<T,Tvector>::NUM_NODES>& matrix, const int power);
 
   /** Calculate element mass matrix [M]. */
   bool  massMatrix(const std::vector<Tvector>& totalCoordinates,
-    TMatrix<T,HexLinear3D<T,Tvector>::NUM_NODES,HexLinear3D<T,Tvector>::NUM_NODES>& matrix, const int power);
+    Matrix<T,HexLinear3D<T,Tvector>::NUM_NODES,HexLinear3D<T,Tvector>::NUM_NODES>& matrix, const int power);
 
   /** Returns volume, -1.0 in case of failure. */
   T volume(const std::vector<Tvector>& totalCoordinates, const int power);
@@ -178,10 +178,10 @@ public:
   // ===== Solution vector =====
 
   /** Get nodal values for this element */
-  TMatrix<T,1,HexLinear3D<T,Tvector>::NUM_NODES> values(const std::vector<T>& totalValues)
+  Matrix<T,1,HexLinear3D<T,Tvector>::NUM_NODES> values(const std::vector<T>& totalValues)
   {
-    TMatrix<T,1,HexLinear3D<T,Tvector>::NUM_NODES> vs;
-    vs.fill(T0);
+    Matrix<T,1,HexLinear3D<T,Tvector>::NUM_NODES> vs;
+    vs.fill(0.0);
 
     for (size_t i = 0; i < HexLinear3D<T,Tvector>::NUM_NODES; i++)
     {
@@ -411,18 +411,18 @@ template <typename  T, typename Tvector> void HexLinear3D<T,Tvector>::shapeFunct
 #ifndef NDEBUG
 #if 1
   T tol = TOLERANCE(T);
-  assert(parms.XYZ[0] >= -T1 - tol && parms.XYZ[0] <= T1 + tol);
-  assert(parms.XYZ[1] >= -T1 - tol && parms.XYZ[1] <= T1 + tol);
-  assert(parms.XYZ[2] >= -T1 - tol && parms.XYZ[2] <= T1 + tol);
+  assert(parms.XYZ[0] >= -1.0 - tol && parms.XYZ[0] <= 1.0 + tol);
+  assert(parms.XYZ[1] >= -1.0 - tol && parms.XYZ[1] <= 1.0 + tol);
+  assert(parms.XYZ[2] >= -1.0 - tol && parms.XYZ[2] <= 1.0 + tol);
 #else
   T tol = TOLERANCE(T);
-  assert(parms.XYZ[0] >= T0 - tol && parms.XYZ[0] <= T1 + tol);
-  assert(parms.XYZ[1] >= T0 - tol && parms.XYZ[1] <= T1 + tol);
-  assert(parms.XYZ[2] >= T0 - tol && parms.XYZ[2] <= T1 + tol);
+  assert(parms.XYZ[0] >= 0.0 - tol && parms.XYZ[0] <= 1.0 + tol);
+  assert(parms.XYZ[1] >= 0.0 - tol && parms.XYZ[1] <= 1.0 + tol);
+  assert(parms.XYZ[2] >= 0.0 - tol && parms.XYZ[2] <= 1.0 + tol);
 #endif
 #endif
 
-  std::fill(func.begin(),func.end(),T0);
+  std::fill(func.begin(),func.end(),0.0);
 
   for (int i = 0; i < NUM_NODES; i++)
   {
@@ -430,7 +430,7 @@ template <typename  T, typename Tvector> void HexLinear3D<T,Tvector>::shapeFunct
     T VVi = parms.Y * nodeParms_[i].Y; 
     T WWi = parms.Z * nodeParms_[i].Z; 
 
-    func[i] = (T1 + UUi) * (T1 + VVi) * (T1 + WWi) * 0.125;
+    func[i] = (1.0 + UUi) * (1.0 + VVi) * (1.0 + WWi) * 0.125;
   }
 }
 
@@ -440,18 +440,18 @@ template <class T, class Tvector> void HexLinear3D<T,Tvector>::shapeDerivatives(
 #ifndef NDEBUG
 #if 1
   T tol = TOLERANCE(T);
-  assert(parms.XYZ[0] >= -T1 - tol && parms.XYZ[0] <= T1 + tol);
-  assert(parms.XYZ[1] >= -T1 - tol && parms.XYZ[1] <= T1 + tol);
-  assert(parms.XYZ[2] >= -T1 - tol && parms.XYZ[2] <= T1 + tol);
+  assert(parms.XYZ[0] >= -1.0 - tol && parms.XYZ[0] <= 1.0 + tol);
+  assert(parms.XYZ[1] >= -1.0 - tol && parms.XYZ[1] <= 1.0 + tol);
+  assert(parms.XYZ[2] >= -1.0 - tol && parms.XYZ[2] <= 1.0 + tol);
 #else
   T tol = TOLERANCE(T);
-  assert(parms.XYZ[0] >= T0 - tol && parms.XYZ[0] <= T1 + tol);
-  assert(parms.XYZ[1] >= T0 - tol && parms.XYZ[1] <= T1 + tol);
-  assert(parms.XYZ[2] >= T0 - tol && parms.XYZ[2] <= T1 + tol);
+  assert(parms.XYZ[0] >= 0.0 - tol && parms.XYZ[0] <= 1.0 + tol);
+  assert(parms.XYZ[1] >= 0.0 - tol && parms.XYZ[1] <= 1.0 + tol);
+  assert(parms.XYZ[2] >= 0.0 - tol && parms.XYZ[2] <= 1.0 + tol);
 #endif
 #endif
 
-  std::fill(func.begin(),func.end(),T0);
+  std::fill(func.begin(),func.end(),0.0);
 
   for (int i = 0; i < 8; i++)
   {
@@ -460,9 +460,9 @@ template <class T, class Tvector> void HexLinear3D<T,Tvector>::shapeDerivatives(
     T WWi = parms.Z * nodeParms_[i].Z; 
 
     Tvector part1d; 
-    part1d.X = nodeParms_[i].X * (T1 + VVi) * (T1 + WWi);
-    part1d.Y = (T1 + UUi) * nodeParms_[i].Y * (T1 + WWi);
-    part1d.Z = (T1 + UUi) * (T1 + VVi) * nodeParms_[i].Z;
+    part1d.X = nodeParms_[i].X * (1.0 + VVi) * (1.0 + WWi);
+    part1d.Y = (1.0 + UUi) * nodeParms_[i].Y * (1.0 + WWi);
+    part1d.Z = (1.0 + UUi) * (1.0 + VVi) * nodeParms_[i].Z;
 
     func[i] = part1d * 0.125;
   }
@@ -545,43 +545,43 @@ template <typename T, typename Tvalue, size_t N> Tvalue shapeFuncValue(const std
 
 template <class T, class Tvector> bool HexLinear3D<T,Tvector>::
   Bmatrix(const std::vector<Tvector> &totalCoordinates, const std::array<Tvector,NUM_NODES> &derivatives,  
-  TMatrix<T,3,NUM_NODES> &B, T &jacobian)
+  Matrix<T,3,NUM_NODES> &B, T &jacobian)
 {
 #ifdef TD_DEBUG_MATRICES
   DebugOutput("  Bmatrix");
 #endif
 
   // coordinates of this element nodes
-  TMatrix<T,NUM_NODES,3> coords = coordMatrix(totalCoordinates);
+  Matrix<T,NUM_NODES,3> coords = coordMatrix(totalCoordinates);
 
 #ifdef TD_DEBUG_MATRICES
   coords.DebugMatrixOutput("coords",10);
 #endif
 
   // matrix for derivatives of shape functions
-  TMatrix<T,NUM_NODES,3> func = shapeFunctionDerivativesMatrix(derivatives);
+  Matrix<T,NUM_NODES,3> func = shapeFunctionDerivativesMatrix(derivatives);
 
 #ifdef TD_DEBUG_MATRICES
     func.DebugMatrixOutput("derivatives",10);
 #endif
 
-  TMatrix<T,3,NUM_NODES> funcT = func.transpose();
+  Matrix<T,3,NUM_NODES> funcT = func.transpose();
 
 #ifdef TD_DEBUG_MATRICES
     funcT.DebugMatrixOutput("derivativesT",10);
 #endif
 
   // Jacobi matrix
-  TMatrix<T,3,3> Jacobi = funcT * coords;
+  Matrix<T,3,3> Jacobi = funcT * coords;
 
   // invert matrix
-  TMatrix<T,3,3> J1 = +Jacobi;
+  Matrix<T,3,3> J1 = +Jacobi;
 
 #ifdef TD_DEBUG_MATRICES
   Jacobi.DebugMatrixOutput("J",10);
   J1.DebugMatrixOutput("J1",10);
 
-  TMatrix<T,3,3> I = J1 * Jacobi;
+  Matrix<T,3,3> I = J1 * Jacobi;
   I.DebugMatrixOutput("I",10);
 #endif
 
@@ -611,10 +611,10 @@ template <class T, class Tvector> bool HexLinear3D<T,Tvector>::
 
 template <class T, class Tvector> bool HexLinear3D<T,Tvector>::stiffnessMatrix(
   const std::vector<Tvector>& totalCoordinates,
-  TMatrix<T,HexLinear3D<T,Tvector>::NUM_NODES,HexLinear3D<T,Tvector>::NUM_NODES>& matrix, const int power)
+  Matrix<T,HexLinear3D<T,Tvector>::NUM_NODES,HexLinear3D<T,Tvector>::NUM_NODES>& matrix, const int power)
 {
   // zero matrix
-  matrix.fill(T0);
+  matrix.fill(0.0);
 
   // shape function derivatives
   for (int i = 0; i < GaussInt[power].numpoints; i++)
@@ -634,18 +634,18 @@ template <class T, class Tvector> bool HexLinear3D<T,Tvector>::stiffnessMatrix(
 #if 1
         Tvector parms(e,n,c);
 #else
-        Tvector parms((e + T1) * T05,(n + T1) * T05,(c + T1) * T05);
+        Tvector parms((e + 1.0) * T05,(n + 1.0) * T05,(c + 1.0) * T05);
 #endif
         std::array<Tvector,NUM_NODES> funcderivatives;
         shapeDerivatives(parms,funcderivatives);
 
-        TMatrix<T,3,NUM_NODES> B;
+        Matrix<T,3,NUM_NODES> B;
         T jacobian;
         bool ok = Bmatrix(totalCoordinates,funcderivatives,B,jacobian); 
         if (!ok)
           return false;
 
-        TMatrix<T,NUM_NODES,NUM_NODES> BTB = B.transpose() * B;
+        Matrix<T,NUM_NODES,NUM_NODES> BTB = B.transpose() * B;
 
         for (int l = 0; l < NUM_NODES; l++)
         {
@@ -671,10 +671,10 @@ template <class T, class Tvector> bool HexLinear3D<T,Tvector>::stiffnessMatrix(
 
 template <class T, class Tvector> bool HexLinear3D<T,Tvector>::massMatrix(
   const std::vector<Tvector>& totalCoordinates,
-  TMatrix<T,HexLinear3D<T,Tvector>::NUM_NODES,HexLinear3D<T,Tvector>::NUM_NODES>& matrix, const int power)
+  Matrix<T,HexLinear3D<T,Tvector>::NUM_NODES,HexLinear3D<T,Tvector>::NUM_NODES>& matrix, const int power)
 {
   // zero matrix
-  matrix.fill(T0);
+  matrix.fill(0.0);
 
   // shape function derivatives
   for (int i = 0; i < GaussInt[power].numpoints; i++)
@@ -694,7 +694,7 @@ template <class T, class Tvector> bool HexLinear3D<T,Tvector>::massMatrix(
 #if 1
         Tvector parms(e,n,c);
 #else
-        Tvector parms((e + T1) * T05,(n + T1) * T05,(c + T1) * T05);
+        Tvector parms((e + 1.0) * T05,(n + 1.0) * T05,(c + 1.0) * T05);
 #endif
         std::array<T,NUM_NODES> func;
         shapeFunctions(parms,func);
@@ -702,7 +702,7 @@ template <class T, class Tvector> bool HexLinear3D<T,Tvector>::massMatrix(
         std::array<Tvector,NUM_NODES> funcderivatives;
         shapeDerivatives(parms,funcderivatives);
 
-        TMatrix<T,3,NUM_NODES> B;
+        Matrix<T,3,NUM_NODES> B;
         T jacobian;
         bool ok = Bmatrix(totalCoordinates,funcderivatives,B,jacobian,false);
         if (!ok)
@@ -727,7 +727,7 @@ template <class T, class Tvector> bool HexLinear3D<T,Tvector>::massMatrix(
 template <class T, class Tvector> T HexLinear3D<T,Tvector>::volume(
   const std::vector<Tvector>& totalCoordinates, const int power)
 {
-  T volume = T0;
+  T volume = 0.0;
 
   // shape function derivatives
   for (int i = 0; i < GaussInt[power].numpoints; i++)
@@ -747,7 +747,7 @@ template <class T, class Tvector> T HexLinear3D<T,Tvector>::volume(
 #if 1
         Tvector parms(e,n,c);
 #else
-        Tvector parms((e + T1) * T05,(n + T1) * T05,(c + T1) * T05);
+        Tvector parms((e + 1.0) * T05,(n + 1.0) * T05,(c + 1.0) * T05);
 #endif
         std::array<T,NUM_NODES> func;
         shapeFunctions(parms,func);
@@ -755,7 +755,7 @@ template <class T, class Tvector> T HexLinear3D<T,Tvector>::volume(
         std::array<Tvector,NUM_NODES> funcderivatives;
         shapeDerivativesSimple(parms,funcderivatives);
 
-        TMatrix<T,3,NUM_NODES> B;
+        Matrix<T,3,NUM_NODES> B;
         T jacobian;
         bool ok = Bmatrix(totalCoordinates,funcderivatives,B,jacobian);
         if (!ok)
@@ -785,15 +785,15 @@ template <class T, class Tvector> Tvector HexLinear3D<T,Tvector>::coordinate(con
   const std::vector<Tvector>& totalCoordinates)
 {
   // nodal coordinate values
-  TMatrix<T,HexLinear3D<T,Tvector>::NUM_NODES,3> coords = coordMatrix(totalCoordinates);
+  Matrix<T,HexLinear3D<T,Tvector>::NUM_NODES,3> coords = coordMatrix(totalCoordinates);
 
   // shape functions
   std::array<T,NUM_NODES> func;
   shapeFunctions(parms,func);
-  TMatrix<T,HexLinear3D<T,Tvector>::NUM_NODES,1> funcmatrix = shapeFunctionMatrix(func);
+  Matrix<T,HexLinear3D<T,Tvector>::NUM_NODES,1> funcmatrix = shapeFunctionMatrix(func);
 
   // multiply
-  TMatrix<T,3,1> res = coords.transpose() * funcmatrix;
+  Matrix<T,3,1> res = coords.transpose() * funcmatrix;
 
   return Tvector(res[0][0],res[1][0],res[2][0]);
 }
@@ -802,15 +802,15 @@ template <class T, class Tvector> T HexLinear3D<T,Tvector>::value(const Tvector&
   const std::vector<T>& totalValues)
 {
   // nodal values
-  TMatrix<T,1,HexLinear3D<T,Tvector>::NUM_NODES> nvalues = values(totalValues);
+  Matrix<T,1,HexLinear3D<T,Tvector>::NUM_NODES> nvalues = values(totalValues);
 
   // shape functions
   std::array<T,NUM_NODES> func;
   shapeFunctions(parms,func);
-  TMatrix<T,HexLinear3D<T,Tvector>::NUM_NODES,1> funcmatrix = shapeFunctionMatrix(func);
+  Matrix<T,HexLinear3D<T,Tvector>::NUM_NODES,1> funcmatrix = shapeFunctionMatrix(func);
 
   // multiply
-  TMatrix<T,1,1> res = nvalues * funcmatrix;
+  Matrix<T,1,1> res = nvalues * funcmatrix;
 
   return res[0][0];
 }
@@ -824,7 +824,7 @@ template <class T, class Tvector> Tvector HexLinear3D<T,Tvector>::gradient(const
 #endif
 
   // nodal values
-  TMatrix<T,1,HexLinear3D<T,Tvector>::NUM_NODES> nvalues = values(totalValues);
+  Matrix<T,1,HexLinear3D<T,Tvector>::NUM_NODES> nvalues = values(totalValues);
 
 #ifdef TD_DEBUG_MATRICES
   nvalues.DebugMatrixOutput("potential",10);
@@ -833,7 +833,7 @@ template <class T, class Tvector> Tvector HexLinear3D<T,Tvector>::gradient(const
   std::array<Tvector,NUM_NODES> funcderivatives;
   shapeDerivatives(parms,funcderivatives);
 
-  TMatrix<T,3,NUM_NODES> B;
+  Matrix<T,3,NUM_NODES> B;
   T jacobian;
   bool ok = Bmatrix(totalCoordinates,funcderivatives,B,jacobian);
 
@@ -845,13 +845,13 @@ template <class T, class Tvector> Tvector HexLinear3D<T,Tvector>::gradient(const
   DebugOutput(CString("jacobian ") + CString(jacobian,10));
 #endif
 
-  TMatrix<T,HexLinear3D<T,Tvector>::NUM_NODES,1> nvaluesT = nvalues.transpose();
+  Matrix<T,HexLinear3D<T,Tvector>::NUM_NODES,1> nvaluesT = nvalues.transpose();
 
 #ifdef TD_DEBUG_MATRICES
   nvaluesT.DebugMatrixOutput("potentialT",10);
 #endif
 
-  TMatrix<T,3,1> d = B * nvaluesT;
+  Matrix<T,3,1> d = B * nvaluesT;
 
 #ifdef TD_DEBUG_MATRICES
   d.DebugMatrixOutput("grad",10);
@@ -870,10 +870,10 @@ template <class T, class Tvector> std::array<T,4>
 
   // zero result matrix
   std::array<T,4> matrix;
-  matrix.fill(T0);
+  matrix.fill(0.0);
 
   // two (must be on plane) coordinates of corners
-  TMatrix<T,4,2> coord;
+  Matrix<T,4,2> coord;
   coord[0][0] = coordinates[0].XYZ[axis0];
   coord[0][1] = coordinates[0].XYZ[axis1];
   coord[1][0] = coordinates[1].XYZ[axis0];
@@ -904,7 +904,7 @@ template <class T, class Tvector> std::array<T,4>
         0.25 * (1.0 - e) * (1.0 + n)
       };
 
-      TMatrix<T,2,4> derfunc;
+      Matrix<T,2,4> derfunc;
       derfunc[0][0] = -(1.0 - n) * 0.25;
       derfunc[0][1] = +(1.0 - n) * 0.25;
       derfunc[0][2] = +(1.0 + n) * 0.25;
@@ -919,21 +919,21 @@ template <class T, class Tvector> std::array<T,4>
 #endif
 
       // Jacobi matrix
-      TMatrix<T,2,2> Jacobi = derfunc * coord;
+      Matrix<T,2,2> Jacobi = derfunc * coord;
 
 #ifdef TD_DEBUG_MATRICES
   Jacobi.DebugMatrixOutput("Jacobi",10);
 #endif
 
       // invert it
-      TMatrix<T,2,2> J1 = +Jacobi;
+      Matrix<T,2,2> J1 = +Jacobi;
 
 #ifdef TD_DEBUG_MATRICES
   J1.DebugMatrixOutput("J1",10);
 #endif
 
 #ifdef TD_DEBUG_MATRICES
-  TMatrix<T,2,2> I = J1 * Jacobi;
+  Matrix<T,2,2> I = J1 * Jacobi;
   I.DebugMatrixOutput("I",10);
 #endif
 
@@ -947,7 +947,7 @@ template <class T, class Tvector> std::array<T,4>
 #ifdef TD_DEBUG_MATRICES
   DebugOutput(CString("jacobian ") + CString(jacobian,10));
 #endif
-      //TMatrix<T,2,4> Bmatrix = J1 * derfunc;
+      //Matrix<T,2,4> Bmatrix = J1 * derfunc;
 
       for (int l = 0; l < 4; l++)
       {
